@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# System updates
+dnf update -y
+
+# Create swap file if needed
+if [ ! -f /swapfile ]; then
+  echo "Creating swap file..."
+  fallocate -l 512M /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+fi
+
+# Install required packages
+dnf install epel-release -y
+dnf install ansible git -y
+
+# Clone repository
+git clone https://github.com/med-hedi-bra/infra-playbook.git /root/infra-playbook
+echo "Repository cloned." 
+# Run Ansible playbook
+if [ -f  /root/infra-playbook/playbook-standard.yml ]; then
+  echo "Executing standard playbook..."
+  ansible-playbook -e @/root/infra-playbook/env/standard.yml /root/infra-playbook/playbook-standard.yml
+fi 
+
+
