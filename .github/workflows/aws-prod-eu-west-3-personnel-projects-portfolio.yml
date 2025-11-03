@@ -1,0 +1,51 @@
+name:  Portfolio Infrastructure Provisioning
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'live/aws/prod/personnel-projects/portfolio**'   
+  
+  workflow_dispatch:
+    inputs:
+      gh-env:
+        description: github environment
+        type: choice
+        options:
+        - aws-prod-eu-west-3-personnel-projects
+        - aws-dev-eu-west-3-personnel-projects 
+
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: live/aws/prod/prod-eu-west-3/personnel-projects/portfolio
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+    environment: ${{ inputs.gh-env }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+          terraform_wrapper: false 
+      
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v1.1.0
+        with:
+          terragrunt_version: 0.58.0
+
+      
+      - name: Format check
+        run: terragrunt hclfmt --check
+
+
+      - name: Apply (on main only)
+        run: terragrunt run-all apply -auto-approve --terragrunt-non-interactive
