@@ -42,7 +42,7 @@ jobs:
         with:
           terragrunt_version: 0.58.0
 
-      
+       
       - name: Format check
         run: terragrunt hclfmt --check
 
